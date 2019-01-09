@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>OOP実習用SimpleRobot簡易表示</title>
+  <style>
+    body, html {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    
+    #container {
+      display: flex;
+      flex-flow: column nowrap;
+      align-items: center;
+      padding: 2em;
+      width: 80%;
+      margin: auto;
+    }
+   
+    #textarea {
+      width: 100%;
+      height: 20em;
+      margin-bottom: 1em;
+    }
+    
+    #info {
+      margin-bottom: 1em;
+    }
+    
+    #svg {
+      width: 50%;
+    }
+  </style>
+</head>
+<body>
+<div id="container">
+<textarea id="textarea">
+0.0 0.0
+100.0 0.0
+100.0 0.0
+50.00000000000002 86.60254037844388
+50.00000000000002 86.60254037844388
+-2.1316282072803006E-14 2.8421709430404007E-14
+</textarea>
+  <div id="info"></div>
+  <svg id="svg" preserveAspectRatio="none"></svg>
+</div>
+  
+<script>
+const infoElement = document.getElementById('info');
+const textareaElement = document.getElementById('textarea');
+const svgElement = document.getElementById('svg');
+const strokeWidth = '3';
+
+function redraw() {
+  const input = textareaElement.value;
+  let points = input.trim().split('\n').map(v => v.trim());
+  points = [points[0], ...points, points[points.length - 1]];
+  
+  if (points.length % 2) {
+    infoElement.innerText = 'ERROR: 行数が2の倍数でない';
+    return;
+  }
+  for (let i = 0; i < points.length / 2; i += 2) {
+    if (points[i] !== points[i + 1]) {
+      infoElement.innerText = 'ERROR: 始点が直前の終点と一致していない';
+      return;
+    }
+  }
+  
+  points = points.filter((v, i) => i % 2);
+  console.log(points);
+  
+  let left = 0;
+  let top = 0;
+  let right = 0;
+  let bottom = 0;
+  for (let i = 0; i < points.length; i++) {
+    const [x, y] = points[i].split(/\s+/).map(v => parseFloat(v));
+    console.log(x, y);
+    if (x < left) left = x;
+    if (x > right) right = x;
+    if (y < top) top = y;
+    if (y > bottom) bottom = y;
+  }
+  
+  const round = 10;
+  left = Math.floor(left / round) * round;
+  right = Math.ceil(right / round) * round;
+  top = Math.floor(top / round) * round;
+  bottom = Math.ceil(bottom / round) * round;
+  
+  points = points.map(v => {
+    const [x, y] = v.split(/\s+/).map(w => parseFloat(w));
+    return `${x} ${bottom - y}`;
+  }).join(' ');
+
+  const svg = `<polyline fill="none" stroke="black" stroke-width="${strokeWidth}" points="${points}" />`;
+  svgElement.setAttribute('viewBox', `${left} 0 ${right - left} ${bottom - top}`);
+  svgElement.innerHTML = svg;
+  
+  infoElement.innerText = `LEFT: ${left}, TOP: ${top}, RIGHT: ${right}, BOTTOM: ${bottom}`;
+}
+
+textareaElement.addEventListener('change', redraw);
+textareaElement.addEventListener('keyup', redraw);
+redraw();
+</script>
+</body>
+</html>
